@@ -26,7 +26,6 @@ _logger = logging.getLogger(__name__)
 class OAuth2Controller(openerpweb.Controller):
 
     _cp_path = '/auth_oauth2'
-    _flow = None
 
     def get_oauth2_client_id(self, request, db):
         return config.get('auth_oauth2.client_id', DEFAULT_CLIENT_ID)
@@ -38,7 +37,7 @@ class OAuth2Controller(openerpweb.Controller):
         return config.get('auth_oauth2.scope', DEFAULT_SCOPE)
 
     def get_oauth2_redirect_uri(self, request, db):
-        return 'http://localhost:8069/auth_oauth2/validate_tocken'
+        return 'http://localhost:8069/auth_oauth2/login'
 
     def get_oauth2_auth_uri(self, request, db):
         return config.get('auth_oauth2.auth_uri', DEFAULT_AUTH_URI)
@@ -50,17 +49,15 @@ class OAuth2Controller(openerpweb.Controller):
         return config.get('auth_oauth2.revoke_uri', DEFAULT_REVOKE_URI)
 
     def get_oauth2_flow(self, request, db):
-        if not self._flow:
-            self._flow = OAuth2WebServerFlow(
-                client_id=self.get_oauth2_client_id(request, db),
-                client_secret=self.get_oauth2_client_secret(request, db),
-                scope=self.get_oauth2_scope(request, db),
-                redirect_uri=self.get_oauth2_redirect_uri(request, db),
-                auth_uri=self.get_oauth2_auth_uri(request, db),
-                token_uri=self.get_oauth2_token_uri(request, db),
-                revoke_uri=self.get_oauth2_revoke_uri(request, db)
-                )
-        return self._flow
+        return OAuth2WebServerFlow(
+            client_id=self.get_oauth2_client_id(request, db),
+            client_secret=self.get_oauth2_client_secret(request, db),
+            scope=self.get_oauth2_scope(request, db),
+            redirect_uri=self.get_oauth2_redirect_uri(request, db),
+            auth_uri=self.get_oauth2_auth_uri(request, db),
+            token_uri=self.get_oauth2_token_uri(request, db),
+            revoke_uri=self.get_oauth2_revoke_uri(request, db)
+            )
 
     @openerpweb.jsonrequest
     def get_oauth2_auth_url(self, request, db):
@@ -72,13 +69,28 @@ class OAuth2Controller(openerpweb.Controller):
         return getattr(request.session, 'dbname',
                        config.get('db_name', DEFAULT_DB_NAME))
 
-    @openerpweb.httprequest
-    def validate_tocken(self, request, code):
-        _logger.info("test httprequest request")
-        db = self.get_dbname(request)
+    def get_credentials(self, request, db, code):
         flow = self.get_oauth2_flow(request, db)
+        return flow.step2_exchange(code)
+
+    @openerpweb.httprequest
+    def login(self, request, code=None, error=None, *kward):
+        dbname = self.get_dbname(request)
+        result = self._validate_token(request, dbname, code, error)
+        if not result or 'error' in result:
+            # TODO: return nice error message to the brower
+            return set_cookie_and_redirect(request, '/#action=login&loginerror=1')
+        return login_and_redirect(request, dbname, result.get('login', False),
+                                  result.get('token', False))
+
+    def _validate_token(self, request, db, code, error):
+        res = {}
+        if error or not code:
+            res['error'] = error if error else "Unexpected return from Oauth2 Provider"
+            return res
+
         try:
-            credentials = flow.step2_exchange(code)
+            credentials = self.get_credentials(request, db, code)
             # Once we get credentials we could request api like that
             # notice that we could directly use credentials.authorize(http)
             # what we can see on the snipet bellow it's that we can re-create
@@ -93,24 +105,20 @@ class OAuth2Controller(openerpweb.Controller):
             # (resp_headers, content) = http.request(
             #     "https://www.googleapis.com/plus/v1/people/me", "GET")
         except FlowExchangeError as err:
-            # TODO: display nice error message
-            _logger.warning('Erreur while checking oauth2 credential %r' % err)
-            return set_cookie_and_redirect(request, '/#action=login&loginerror=1')
-        registry = RegistryManager.get(db)
-        login = False
-        key = False
-        email = False
+            res['error'] = u"%r" % err
+            return res
 
-        if getattr(credentials, 'id_token'):
-            email = credentials.id_token.get('email')
-            key = credentials.access_token
+        registry = RegistryManager.get(db)
+        email = credentials.id_token.get('email', False)
+        token = credentials.access_token
         with registry.cursor() as cr:
-            users = registry.get('res.users')
-            res = users.search(cr, SUPERUSER_ID, [('email', '=', email)])
-            if not res:
-                return set_cookie_and_redirect(request, '/?debug=#action=login&loginerror')
-            uid = res[0]
-            res = users.read(cr, SUPERUSER_ID, uid, ['login', 'password'])
-            users.write(cr, SUPERUSER_ID, uid, {'password': key})
-            login = res.get('login', False)
-        return login_and_redirect(request, db, login, key)
+            user_mdl = registry.get('res.users')
+            user_ids = user_mdl.search(cr, SUPERUSER_ID, [('email', 'ilike', email)])
+            if not user_ids:
+                res['error'] = u"User email %s not find in the current db" % email
+                return res
+            user = user_mdl.read(cr, SUPERUSER_ID, user_ids[0], ['login'])
+            user_mdl.write(cr, SUPERUSER_ID, user_ids[0], {'password': token})
+            res['login'] = user.get('login', False)
+        res['token'] = token
+        return res

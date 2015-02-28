@@ -67,10 +67,28 @@ How to get it works with google oauth2
 * Go to API & authentication to create a new ID
 * In Oauth section create client ID
 * set your allowed sources uri: [protocole]://[hostname] (ie: https://anybox.fr)
-* set redirect uri with: [protocole]://[hostname]/auth_oauth2/validate_tocken
-  (ie: https://anybox.fr/auth_oauth2/validate_tocken)
+* set redirect uri with: [protocole]://[hostname]/auth_oauth2/login
+  (ie: https://anybox.fr/auth_oauth2/login)
 * Define in odoo your Google OAuth2 Provider
 
+TODO
+----
+
+* Manages bd name through redirects
+* Handle errorr parameter when user refused to give access to odoo
+* Manage dbname initialisation when came back from the provider
+* well manage error message and translate it
+* test differents use cases and try to make unit test them
+    - User cancel auth
+    - Unknown user
+    - missing scope auth
+    - bad secret code
+    - wrong redirect uri set in google console
+    - wrong origine host set in google console
+* Have a look if we are concerned by the way we got an existed session that sould
+  not work (cf controllers in auth_oauth module)
+* add revoke button and find out if there is differences with deconexion, if yes
+  implement both
     """,
     'author': 'Anybox',
     'website': 'http://anybox.fr',
