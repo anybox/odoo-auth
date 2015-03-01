@@ -80,3 +80,10 @@ class Test_auth_oauth2(SharedSetupTransactionCase):
                 self.id_token = {'email': email}
                 self.access_token = access_token
         return cred(email, access_token)
+
+    def test_retrieve_state(self):
+        self.assertDictContainsSubset(
+            {'debug': 1, 'db': 'ma base'},
+            self.oauth2.retrieve_state(
+                u'%7B%27debug%27%3A+1%2C+%27db%27%3A+%27ma+base%27%7D')
+        )

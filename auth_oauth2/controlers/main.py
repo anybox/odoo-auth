@@ -1,4 +1,6 @@
 import logging
+import ast
+import urllib
 import openerp.addons.web.http as openerpweb
 
 from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
@@ -12,7 +14,6 @@ from openerp.addons.web.controllers.main import set_cookie_and_redirect
 from openerp import SUPERUSER_ID
 from openerp.tools import config
 
-DEFAULT_DB_NAME = 'oauth2'
 DEFAULT_CLIENT_ID = ''
 DEFAULT_CLIENT_SECRET = ''
 DEFAULT_SCOPE = 'email'
@@ -56,26 +57,46 @@ class OAuth2Controller(openerpweb.Controller):
             redirect_uri=self.get_oauth2_redirect_uri(request, db),
             auth_uri=self.get_oauth2_auth_uri(request, db),
             token_uri=self.get_oauth2_token_uri(request, db),
-            revoke_uri=self.get_oauth2_revoke_uri(request, db)
-            )
+            revoke_uri=self.get_oauth2_revoke_uri(request, db))
 
     @openerpweb.jsonrequest
     def get_oauth2_auth_url(self, request, db):
         flow = self.get_oauth2_flow(request, db)
         url = flow.step1_get_authorize_url()
-        return {'value': url, 'session_id': request.session_id}
+        return {'value': url + '&' +
+                urllib.urlencode({'state': {'db': db,
+                                            'debug': request.debug}})}
 
-    def get_dbname(self, request):
-        return getattr(request.session, 'dbname',
-                       config.get('db_name', DEFAULT_DB_NAME))
+    def get_dbname(self, request, state):
+        """
+        Should we use that ?
+        from openerp.addons.web import db_list
+        dbs = db_list(req, True)
+        # 1 try the db in the url
+        db_url = req.params.get('db')
+        if db_url and db_url in dbs:
+            return (db_url, False)
+        # 2 use the database from the cookie if it's listable and still listed
+        cookie_db = req.httprequest.cookies.get('last_used_database')
+        if cookie_db in dbs:
+            db = cookie_db
+        # 3 use monodb if len(dbs) == 1!
+        """
+        return state.get('db', False)
 
     def get_credentials(self, request, db, code):
         flow = self.get_oauth2_flow(request, db)
         return flow.step2_exchange(code)
 
+    def retrieve_state(self, state):
+        if not state:
+            return {}
+        return ast.literal_eval(urllib.unquote_plus(state))
+
     @openerpweb.httprequest
-    def login(self, request, code=None, error=None, *kward):
-        dbname = self.get_dbname(request)
+    def login(self, request, code=None, error=None, **kward):
+        state = self.retrieve_state(kward.get("state", False))
+        dbname = self.get_dbname(request, state)
         result = self._validate_token(request, dbname, code, error)
         if not result or 'error' in result:
             # TODO: return nice error message to the brower

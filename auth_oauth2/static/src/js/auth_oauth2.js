@@ -41,9 +41,6 @@ openerp.auth_oauth2 = function(instance) {
                         self.do_warn(result.title, result.error);
                         return;
                     }
-                    if (result.session_id) {
-                        self.session.set_cookie('session_id', result.session_id);
-                    }
                     window.location.replace(result.value);
             });
         },

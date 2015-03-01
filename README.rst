@@ -68,7 +68,6 @@ How to get it works with google oauth2
 TODO
 ----
 
-* Manages DB name through redirects
 * Handle errorr parameter when user refused to give access to odoo
 * well manage error message and translate them
 * test differents use cases and try to make unit test them
