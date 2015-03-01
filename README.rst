@@ -68,11 +68,8 @@ How to get it works with google oauth2
 TODO
 ----
 
-* Handle errorr parameter when user refused to give access to odoo
-* well manage error message and translate them
+* translate error messages
 * test differents use cases and try to make unit test them
-    - User cancel auth
-    - Unknown user
     - missing scope auth
     - bad secret code
     - wrong redirect uri set in google console

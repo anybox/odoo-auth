@@ -99,8 +99,9 @@ class OAuth2Controller(openerpweb.Controller):
         dbname = self.get_dbname(request, state)
         result = self._validate_token(request, dbname, code, error)
         if not result or 'error' in result:
-            # TODO: return nice error message to the brower
-            return set_cookie_and_redirect(request, '/#action=login&loginerror=1')
+            return set_cookie_and_redirect(request,
+                                           '/#action=login&loginerror=1&' +
+                                           urllib.urlencode(result))
         return login_and_redirect(request, dbname, result.get('login', False),
                                   result.get('token', False))
 

@@ -12,7 +12,17 @@ openerp.auth_oauth2 = function(instance) {
         is_oauth2_cnx: false,
 
         start: function() {
-            if(!window.location.hash || window.location.hash != '#login,password'){
+            var self = this;
+            if(this.params.hasOwnProperty('loginerror')){
+                var message = "Access Denied"
+                if (this.params.hasOwnProperty('error')){
+                    message = this.params.error;
+                }
+                self.$(".oe_login_pane").fadeIn("fast", function() {
+                    self.show_error(_t(message));
+                });
+            }
+            if(!this.params.hasOwnProperty('login,password')){
                 cnx_form = this.$el.find('.oe_login_pane form > ul:last-child()');
                 cnx_form.hide()
                 $(QWeb.render('auth_oauth2.login')).insertAfter(cnx_form);
@@ -28,6 +38,8 @@ openerp.auth_oauth2 = function(instance) {
                 if(ev) {
                     ev.preventDefault();
                 }
+                this.hide_error();
+                this.$(".oe_login_pane").fadeOut("slow");
                 var db = this.$el.find("form [name=db]").val();
                 this.do_oauth2_login(db);
             }
