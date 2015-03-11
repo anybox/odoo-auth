@@ -89,7 +89,6 @@ How to get it works with google oauth2
 TODO
 ----
 
-* realy create dinamic url
 * translate error messages
 * Have a look if we are concerned by the way we got an existed session that sould
   not work (cf controllers in Odoo `auth_oauth` module)

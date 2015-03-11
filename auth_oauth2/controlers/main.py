@@ -21,12 +21,15 @@ DEFAULT_AUTH_URI = GOOGLE_AUTH_URI
 DEFAULT_TOKEN_URI = GOOGLE_TOKEN_URI
 DEFAULT_REVOKE_URI = GOOGLE_REVOKE_URI
 
+CONTROLER_PATH = '/auth_oauth2'
+LOGIN_METHOD = 'login'
+
 _logger = logging.getLogger(__name__)
 
 
 class OAuth2Controller(openerpweb.Controller):
 
-    _cp_path = '/auth_oauth2'
+    _cp_path = CONTROLER_PATH
 
     def get_oauth2_client_id(self, request, db):
         return config.get('auth_oauth2.client_id', DEFAULT_CLIENT_ID)
@@ -38,7 +41,10 @@ class OAuth2Controller(openerpweb.Controller):
         return config.get('auth_oauth2.scope', DEFAULT_SCOPE)
 
     def get_oauth2_redirect_uri(self, request, db):
-        return 'http://localhost:8069/auth_oauth2/login'
+        url = request.httprequest.environ.get('HTTP_REFERER', False)
+        if not url:
+            url = request.httprequest.url_root
+        return url + CONTROLER_PATH + '/' + LOGIN_METHOD
 
     def get_oauth2_auth_uri(self, request, db):
         return config.get('auth_oauth2.auth_uri', DEFAULT_AUTH_URI)
