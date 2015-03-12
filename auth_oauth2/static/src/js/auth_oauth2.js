@@ -28,7 +28,7 @@ openerp.auth_oauth2 = function(instance) {
                 $(QWeb.render('auth_oauth2.login')).insertAfter(cnx_form);
                 this.is_oauth2_cnx = true;
             }
-            this._super();
+            return this._super();
         },
 
         on_submit: function(ev) {
