@@ -24,19 +24,23 @@ Settings
 * **auth_oauth2.client_secret**: A secret code given by your Oauth2 provider
 * **auth_oauth2.auth_uri**: OAuth2 provider URL to authenticate users
   (*default*: Google uri https://accounts.google.com/o/oauth2/auth)
-* **auth_oauth2.scope**: string or iterable of strings, OAUth user data desired to access
-  (*default*: email)
+* **auth_oauth2.scope**: string or iterable of strings, OAUth user data desired 
+  to access (*default*: email)
 * **auth_oauth2.token_uri**: OAuth provider URL to validate tokens
   (*default*: Google uri https://accounts.google.com/o/oauth2/token)
 * **auth_oauth2.data_endpoint**: Data URL
+* **auth_oauth2.redirect_uri**: This should be
+  `http[s]://your.host.name[:port]/auth_oauth2/login` if it's not set, this
+  module will construct if from `web.base.url` set in `ir.config_parameter` +
+  `/auth_oauth2/login`
 
 
 Not implemented:
 
 * **auth_oauth2.revoke_uri**: OAuth provider URL to revoke authorizations
   (*default*: Google uri https://accounts.google.com/o/oauth2/revoke)
-* **auth_oauth2.redirect_uri**: actualy calculated by this module
-* **auth_oauth2.user_agent**: string, HTTP User-Agent to provide for this application.
+* **auth_oauth2.user_agent**: string, HTTP User-Agent to provide for this
+  application.
 
 Probably we could go deeper with thoses available attibutes:
 

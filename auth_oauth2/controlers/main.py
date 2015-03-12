@@ -41,10 +41,14 @@ class OAuth2Controller(openerpweb.Controller):
         return config.get('auth_oauth2.scope', DEFAULT_SCOPE)
 
     def get_oauth2_redirect_uri(self, request, db):
-        url = request.httprequest.environ.get('HTTP_REFERER', False)
+        url = config.get('auth_oauth2.redirect_uri', False)
         if not url:
-            url = request.httprequest.url_root
-        return url + CONTROLER_PATH + '/' + LOGIN_METHOD
+            registry = RegistryManager.get(db)
+            ir_conf = registry.get('ir.config_parameter')
+            with registry.cursor() as cr:
+                url = (ir_conf.get_param(cr, 1, 'web.base.url') +
+                       CONTROLER_PATH + '/' + LOGIN_METHOD)
+        return url
 
     def get_oauth2_auth_uri(self, request, db):
         return config.get('auth_oauth2.auth_uri', DEFAULT_AUTH_URI)
