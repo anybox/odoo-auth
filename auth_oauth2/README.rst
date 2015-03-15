@@ -24,7 +24,7 @@ Settings
 * **auth_oauth2.client_secret**: A secret code given by your Oauth2 provider
 * **auth_oauth2.auth_uri**: OAuth2 provider URL to authenticate users
   (*default*: Google uri https://accounts.google.com/o/oauth2/auth)
-* **auth_oauth2.scope**: string or iterable of strings, OAUth user data desired 
+* **auth_oauth2.scope**: string or iterable of strings, OAUth user data desired
   to access (*default*: email)
 * **auth_oauth2.token_uri**: OAuth provider URL to validate tokens
   (*default*: Google uri https://accounts.google.com/o/oauth2/token)
@@ -45,7 +45,7 @@ Not implemented:
 Probably we could go deeper with thoses available attibutes:
 
 * 'state': fields.char('state') Provides any state that might be useful to your
-  application. *This one is actualy used to pass the db name*
+  application. *Today it's only used to pass the db name*
 * 'access_type': fields.selection([('online', u"On line"), ('offline', u"Off line")])
 * 'approval_prompt': fields.selection([('force', u"Force"), ('auto', u"Auto")])
 
@@ -98,6 +98,10 @@ TODO
   not work (cf controllers in Odoo `auth_oauth` module)
 * add revoke button and find out if there is differences with log out, if yes
   implement both
+* get all params and hash parameters from uri (not only the db name)to pass it
+  in state before redirect user to the oauth provider. Later retrieved them
+  before set the connection uri. To do that we will avoid to lost link to an
+  object during connection.
 
 License
 -------

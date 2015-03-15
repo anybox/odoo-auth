@@ -145,12 +145,12 @@ class OAuth2Controller(openerpweb.Controller):
         token = credentials.access_token
         with registry.cursor() as cr:
             user_mdl = registry.get('res.users')
-            user_ids = user_mdl.search(cr, SUPERUSER_ID, [('email', 'ilike', email)])
-            if not user_ids:
+            user_id = user_mdl.get_user_id_by_email(cr, SUPERUSER_ID, email)
+            if not user_id:
                 res['error'] = u"User email %s not find in the current db" % email
                 return res
-            user = user_mdl.read(cr, SUPERUSER_ID, user_ids[0], ['login'])
-            user_mdl.write(cr, SUPERUSER_ID, user_ids[0], {'password': token})
+            user = user_mdl.read(cr, SUPERUSER_ID, user_id, ['login'])
+            user_mdl.write(cr, SUPERUSER_ID, user_id, {'password': token})
             res['login'] = user.get('login', False)
         res['token'] = token
         return res
