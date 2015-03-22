@@ -15,6 +15,9 @@
     'external_dependencies': {
         'python': ['oauth2client'],
     },
+    'data': [
+        'data/res_users_view.xml',
+    ],
     'demo': [
         'demo/res_users.xml',
     ],

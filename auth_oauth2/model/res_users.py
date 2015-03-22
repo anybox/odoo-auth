@@ -8,7 +8,7 @@ class res_users(osv.Model):
     _columns = {
         'oauth_email': fields.char(u"Oauth2 email",
                                    size=64,
-                                   help=u"Oauth2 email used to connect to odoo"),
+                                   help=u"Oauth2 email only used to connect to Odoo"),
     }
 
     def get_user_id_by_email(self, cr, uid, email, context=None):
