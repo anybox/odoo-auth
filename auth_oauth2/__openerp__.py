@@ -15,7 +15,8 @@
     'external_dependencies': {
         'python': ['oauth2client'],
     },
-    'data': [
+    'demo': [
+        'demo/res_users.xml',
     ],
     'js': [
         'static/src/js/auth_oauth2.js'

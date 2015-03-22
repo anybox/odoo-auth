@@ -13,6 +13,7 @@ from openerp.addons.web.controllers.main import login_and_redirect
 from openerp.addons.web.controllers.main import set_cookie_and_redirect
 from openerp import SUPERUSER_ID
 from openerp.tools import config
+from openerp.tools.translate import _
 
 DEFAULT_CLIENT_ID = ''
 DEFAULT_CLIENT_SECRET = ''
@@ -147,7 +148,7 @@ class OAuth2Controller(openerpweb.Controller):
             user_mdl = registry.get('res.users')
             user_id = user_mdl.get_user_id_by_email(cr, SUPERUSER_ID, email)
             if not user_id:
-                res['error'] = u"User email %s not find in the current db" % email
+                res['error'] = _(u"User email %s not found in the current db") % email
                 return res
             user = user_mdl.read(cr, SUPERUSER_ID, user_id, ['login'])
             user_mdl.write(cr, SUPERUSER_ID, user_id, {'password': token})

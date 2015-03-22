@@ -10,6 +10,8 @@ class Test_auth_oauth2(SharedSetupTransactionCase):
         super(Test_auth_oauth2, cls).initTestData()
         cls.oauth2 = controler.OAuth2Controller()
         cls.dbname = cls.cr.dbname
+        cls.user_mdl = cls.registry('res.users')
+        cls.user_demo_id = cls.ref('base.user_demo')
 
     def test_get_default_values(self):
         self.assertEquals(
@@ -50,7 +52,6 @@ class Test_auth_oauth2(SharedSetupTransactionCase):
             return code
 
         self.oauth2.get_credentials = mock_get_credentials
-
         self.assertDictContainsSubset(
             {'login': u'demo',
              'token': u'credential password'},
@@ -61,7 +62,7 @@ class Test_auth_oauth2(SharedSetupTransactionCase):
         )
 
         self.assertDictContainsSubset(
-            {'error': u"User email gracinet@anybox.fr not find in the current db"},
+            {'error': u"User email gracinet@anybox.fr not found in the current db"},
             self.oauth2._validate_token(None, self.dbname,
                                         self.get_mock_code(u'gracinet@anybox.fr',
                                                            u'credential password'),
