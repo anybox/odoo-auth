@@ -1,0 +1,54 @@
+# Translation of OpenERP Server.
+# This file contains the translation of the following modules:
+#	* auth_oauth2
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: OpenERP Server 7.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-04-15 14:39+0000\n"
+"PO-Revision-Date: 2015-04-15 14:39+0000\n"
+"Last-Translator: <>\n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: \n"
+
+#. module: auth_oauth2
+#: field:res.users,oauth_email:0
+msgid "Oauth2 email"
+msgstr "Oauth2 email"
+
+#. module: auth_oauth2
+#: help:res.users,oauth_email:0
+msgid "Oauth2 email only used to connect to Odoo"
+msgstr "Oauth2 email only used to connect to Odoo"
+
+#. module: auth_oauth2
+#. openerp-web
+#: code:addons/auth_oauth2/static/src/xml/auth_oauth2.xml:6
+#, python-format
+msgid "Open new session"
+msgstr "Open new session"
+
+#. module: auth_oauth2
+#: code:addons/auth_oauth2/controlers/main.py:151
+#, python-format
+msgid "User email %s not found in the current db"
+msgstr "User email %s not found in the current db"
+
+#. module: auth_oauth2
+#: code:addons/auth_oauth2/model/res_users.py:24
+#: sql_constraint:res.users:0
+#, python-format
+msgid "User email must be unique. You can't have two users with the same email address."
+msgstr "User email must be unique. You can't have two users with the same email address."
+
+#. module: auth_oauth2
+#: code:_description:0
+#: model:ir.model,name:auth_oauth2.model_res_users
+#, python-format
+msgid "Users"
+msgstr "Utilisateurs"
+
