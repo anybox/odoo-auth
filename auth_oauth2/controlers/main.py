@@ -158,7 +158,7 @@ class OAuth2Controller(openerpweb.Controller):
         # email not given in the id_token dictionnary so we have to request it
         if not email:
             http_credentials = credentials.authorize(httplib2.Http())
-            response = http_credentials.request(credentials.data_endpoint, 'POST')
+            response = http_credentials.request(self.get_oauth2_data_endpoint(request, db), 'POST')
             # django-oidc-provider case
             if response and isinstance(response, tuple):
                 if isinstance(response[1], str):
