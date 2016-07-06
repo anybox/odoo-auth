@@ -2,6 +2,7 @@ import logging
 import ast
 import urllib
 import openerp.addons.web.http as openerpweb
+import httplib2
 
 from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
 from oauth2client import GOOGLE_AUTH_URI
@@ -21,6 +22,8 @@ DEFAULT_SCOPE = 'email'
 DEFAULT_AUTH_URI = GOOGLE_AUTH_URI
 DEFAULT_TOKEN_URI = GOOGLE_TOKEN_URI
 DEFAULT_REVOKE_URI = GOOGLE_REVOKE_URI
+DEFAULT_DATA_ENDPOINT = ''
+
 
 CONTROLER_PATH = '/auth_oauth2'
 LOGIN_METHOD = 'login'
@@ -60,6 +63,9 @@ class OAuth2Controller(openerpweb.Controller):
     def get_oauth2_revoke_uri(self, request, db):
         return config.get('auth_oauth2.revoke_uri', DEFAULT_REVOKE_URI)
 
+    def get_oauth2_data_endpoint(self, request, db):
+        return config.get('auth_oauth2.data_endpoint', DEFAULT_DATA_ENDPOINT)
+
     def get_oauth2_flow(self, request, db):
         return OAuth2WebServerFlow(
             client_id=self.get_oauth2_client_id(request, db),
@@ -68,15 +74,19 @@ class OAuth2Controller(openerpweb.Controller):
             redirect_uri=self.get_oauth2_redirect_uri(request, db),
             auth_uri=self.get_oauth2_auth_uri(request, db),
             token_uri=self.get_oauth2_token_uri(request, db),
-            revoke_uri=self.get_oauth2_revoke_uri(request, db))
+            revoke_uri=self.get_oauth2_revoke_uri(request, db),
+            data_endpoint=self.get_oauth2_data_endpoint(request, db),
+        )
 
     @openerpweb.jsonrequest
     def get_oauth2_auth_url(self, request, db):
         flow = self.get_oauth2_flow(request, db)
         url = flow.step1_get_authorize_url()
-        return {'value': url + '&' +
-                urllib.urlencode({'state': {'db': db,
-                                            'debug': request.debug}})}
+        return {
+            'value': url + '&' + urllib.urlencode(
+                {'state': {'db': db, 'debug': request.debug}}
+            )
+        }
 
     def get_dbname(self, request, state):
         """
@@ -110,14 +120,16 @@ class OAuth2Controller(openerpweb.Controller):
         dbname = self.get_dbname(request, state)
         result = self._validate_token(request, dbname, code, error)
         if not result or 'error' in result:
-            return set_cookie_and_redirect(request,
-                                           '/#action=login&loginerror=1&' +
-                                           urllib.urlencode(result))
-        return login_and_redirect(request, dbname, result.get('login', False),
-                                  result.get('token', False))
+            return set_cookie_and_redirect(
+                request, '/#action=login&loginerror=1&' + urllib.urlencode(result)
+            )
+        return login_and_redirect(
+            request, dbname, result.get('login', False), result.get('token', False)
+        )
 
     def _validate_token(self, request, db, code, error):
         res = {}
+        data = False
         if error or not code:
             res['error'] = error if error else "Unexpected return from Oauth2 Provider"
             return res
@@ -143,6 +155,16 @@ class OAuth2Controller(openerpweb.Controller):
 
         registry = RegistryManager.get(db)
         email = credentials.id_token.get('email', False)
+        # email not given in the id_token dictionnary so we have to request it
+        if not email:
+            http_credentials = credentials.authorize(httplib2.Http())
+            response = http_credentials.request(credentials.data_endpoint, 'POST')
+            # django-oidc-provider case
+            if response and isinstance(response, tuple):
+                if isinstance(response[1], str):
+                    data = ast.literal_eval(response[1])
+            if data and data.get('email', False):
+                email = data.get('email')
         token = credentials.access_token
         with registry.cursor() as cr:
             user_mdl = registry.get('res.users')
