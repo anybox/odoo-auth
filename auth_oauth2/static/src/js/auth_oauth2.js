@@ -58,7 +58,7 @@ openerp.auth_oauth2 = function(instance) {
         },
     });
 
-    instance.web.OauthWebClient = instance.web.WebClient.extend({
+    instance.web.WebClient = instance.web.WebClient.extend({
     
         bind_hashchange: function() {
             var self = this;
