@@ -11,12 +11,13 @@
     """,
     'author': 'Anybox',
     'website': 'http://anybox.fr',
-    'depends': ['base', 'web'],
+    'depends': ['base', 'web', 'share'],
     'external_dependencies': {
         'python': ['oauth2client'],
     },
     'data': [
         'data/res_users_view.xml',
+        'static/src/xml/auth_oauth2.xml',
     ],
     'demo': [
         'demo/res_users.xml',
@@ -25,9 +26,7 @@
         'static/src/js/auth_oauth2.js'
     ],
     'css': [],
-    'qweb': [
-        "static/src/xml/auth_oauth2.xml",
-    ],
+    'qweb': [],
     'installable': True,
     'auto_install': False,
 }

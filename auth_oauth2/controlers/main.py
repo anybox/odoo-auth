@@ -1,17 +1,25 @@
+import functools
 import logging
 import ast
 import urllib
 import openerp.addons.web.http as openerpweb
 import httplib2
+import simplejson
+import urlparse
+import werkzeug.utils
+
 
 from oauth2client.client import OAuth2WebServerFlow, FlowExchangeError
 from oauth2client import GOOGLE_AUTH_URI
 from oauth2client import GOOGLE_TOKEN_URI
 from oauth2client import GOOGLE_REVOKE_URI
 
+from openerp.addons.web.controllers.main import db_monodb, ensure_db, set_cookie_and_redirect, login_and_redirect
+from openerp.addons.auth_signup.controllers.main import AuthSignupHome as Home
+from openerp import http
+from openerp.http import request
 from openerp.modules.registry import RegistryManager
 from openerp.addons.web.controllers.main import login_and_redirect
-from openerp.addons.web.controllers.main import set_cookie_and_redirect
 from openerp import SUPERUSER_ID
 from openerp.tools import config
 from openerp.tools.translate import _
@@ -31,7 +39,93 @@ LOGIN_METHOD = 'login'
 _logger = logging.getLogger(__name__)
 
 
-class OAuth2Controller(openerpweb.Controller):
+#----------------------------------------------------------
+# helpers
+#----------------------------------------------------------
+def fragment_to_query_string(func):
+    @functools.wraps(func)
+    def wrapper(self, *a, **kw):
+        kw.pop('debug', False)
+        if not kw:
+            return """<html><head><script>
+                var l = window.location;
+                var q = l.hash.substring(1);
+                var r = l.pathname + l.search;
+                if(q.length !== 0) {
+                    var s = l.search ? (l.search === '?' ? '' : '&') : '?';
+                    r = l.pathname + l.search + s + q;
+                }
+                if (r == l.pathname) {
+                    r = '/';
+                }
+                window.location = r;
+            </script></head><body></body></html>"""
+        return func(self, *a, **kw)
+    return wrapper
+
+
+class OAuth2Login(Home):
+
+    @http.route()
+    def web_login(self, *args, **kw):
+        ensure_db()
+        if request.httprequest.method == 'GET' and request.session.uid and request.params.get('redirect'):
+            # Redirect if already logged in and redirect param is present
+            return http.redirect_with_hash(request.params.get('redirect'))
+        oauth2_provider = self.get_oauth2_provider()
+
+        response = super(OAuth2Login, self).web_login(*args, **kw)
+        if response.is_qweb:
+            error = request.params.get('oauth_error')
+            if error == '1':
+                error = _("Sign up is not allowed on this database.")
+            elif error == '2':
+                error = _("Access Denied - {}".format(response.qcontext['error']))
+            elif error == '3':
+                error = _("You do not have access to this database or your invitation has expired. Please ask for an invitation and be sure to follow the link in your invitation email.")
+            else:
+                error = None
+
+            response.qcontext['oauth2_provider'] = oauth2_provider
+            if error:
+                response.qcontext['error'] = error
+        return response
+
+    def get_state(self):
+        redirect = request.params.get('redirect') or 'web'
+        if not redirect.startswith(('//', 'http://', 'https://')):
+            redirect = '%s%s' % (request.httprequest.url_root, redirect[1:] if redirect[0] == '/' else redirect)
+        state = dict(
+            d=request.session.db,
+            p=1,
+            r=werkzeug.url_quote_plus(redirect),
+        )
+        token = request.params.get('token')
+        if token:
+            state['t'] = token
+        return state
+
+
+    def get_oauth2_provider(self):
+        authorize_uri = config.get('auth_oauth2.auth_uri', False)
+        token_uri = config.get('auth_oauth2.token_uri', False)
+        data_uri = config.get('auth_oauth2.data_uri', False)
+        scopes = config.get('auth_oauth2.scope', False)
+        client_id = config.get('auth_oauth2.client_id', False)
+        client_secret = config.get('auth_oauth2.client_secret', False)
+        redirect_uri = config.get('auth_oauth2.redirect_uri', False)
+        params = dict(
+            debug=request.debug,
+            response_type='code',
+            client_id=client_id,
+            redirect_uri=redirect_uri,
+            scope=scopes,
+            state=simplejson.dumps(self.get_state()),
+        )
+        return authorize_uri+'?'+ werkzeug.url_encode(params)
+
+
+class OAuth2Controller(http.Controller):
 
     _cp_path = CONTROLER_PATH
 
@@ -103,7 +197,7 @@ class OAuth2Controller(openerpweb.Controller):
             db = cookie_db
         # 3 use monodb if len(dbs) == 1!
         """
-        return state.get('db', False)
+        return state.get('d', False)
 
     def get_credentials(self, request, db, code):
         flow = self.get_oauth2_flow(request, db)
@@ -114,17 +208,18 @@ class OAuth2Controller(openerpweb.Controller):
             return {}
         return ast.literal_eval(urllib.unquote_plus(state))
 
-    @openerpweb.httprequest
-    def login(self, request, code=None, error=None, **kward):
-        state = self.retrieve_state(kward.get("state", False))
+    @http.route('/auth_oauth2/signin', type='http', auth='none')
+    @fragment_to_query_string
+    def login(self, **kwargs):
+        state = self.retrieve_state(kwargs.get("state", False))
+        code = kwargs.get('code', False)
+        error = kwargs.get('error', False)
         dbname = self.get_dbname(request, state)
         result = self._validate_token(request, dbname, code, error)
         if not result or 'error' in result:
-            return set_cookie_and_redirect(
-                request, '/#action=login&loginerror=1&' + urllib.urlencode(result)
-            )
+            return set_cookie_and_redirect('/web/login?oauth_error=2&' + urllib.urlencode(result))
         return login_and_redirect(
-            request, dbname, result.get('login', False), result.get('token', False)
+            dbname, result.get('login', False), result.get('token', False)
         )
 
     def _validate_token(self, request, db, code, error):
@@ -152,7 +247,6 @@ class OAuth2Controller(openerpweb.Controller):
         except FlowExchangeError as err:
             res['error'] = u"%r" % err
             return res
-
         registry = RegistryManager.get(db)
         email = credentials.id_token.get('email', False)
         # email not given in the id_token dictionnary so we have to request it

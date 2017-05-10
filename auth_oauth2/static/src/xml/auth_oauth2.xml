@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- vim:fdl=1: -->
-<templates id="template" xml:space="preserve">
-    <t t-name="auth_oauth2.login">
-        <ul>
-            <li><button name="submit">Open new session</button></li>
-        </ul>
-    </t>
-</templates>
+<openerp>
+    <data>
+        <template id="auth_oauth2.login" inherit_id="web.login" name="OAuth2 Login Button">
+            <xpath expr="//button[@type='submit']" position="before">
+                <div class="pull-right">
+                   <a t-att-href="oauth2_provider">Login With OAuth2</a>
+                </div>
+            </xpath>
+        </template>
+    </data>
+</openerp>
