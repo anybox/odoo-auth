@@ -18,6 +18,7 @@
     'data': [
         'data/res_users_view.xml',
         'static/src/xml/auth_oauth2.xml',
+        'views/auth_oauth2_view.xml',
     ],
     'demo': [
         'demo/res_users.xml',

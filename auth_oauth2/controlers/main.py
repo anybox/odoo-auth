@@ -224,7 +224,7 @@ class OAuth2Controller(http.Controller):
 
     def _validate_token(self, request, db, code, error):
         res = {}
-        data = False
+        data, user_id = False, False
         if error or not code:
             res['error'] = error if error else "Unexpected return from Oauth2 Provider"
             return res
@@ -248,7 +248,8 @@ class OAuth2Controller(http.Controller):
             res['error'] = u"%r" % err
             return res
         registry = RegistryManager.get(db)
-        email = credentials.id_token.get('email', False)
+        id_token = credentials.id_token
+        email = id_token.get('email', False)
         # email not given in the id_token dictionnary so we have to request it
         if not email:
             http_credentials = credentials.authorize(httplib2.Http())
@@ -261,13 +262,19 @@ class OAuth2Controller(http.Controller):
                 email = data.get('email')
         token = credentials.access_token
         with registry.cursor() as cr:
-            user_mdl = registry.get('res.users')
-            user_id = user_mdl.get_user_id_by_email(cr, SUPERUSER_ID, email)
+            if email:
+                user_mdl = registry.get('res.users')
+                user_id = user_mdl.get_user_id_by_email(cr, SUPERUSER_ID, email)
             if not user_id:
                 res['error'] = _(u"User email %s not found in the current db") % email
                 return res
             user = user_mdl.read(cr, SUPERUSER_ID, user_id, ['login'])
-            user_mdl.write(cr, SUPERUSER_ID, user_id, {'password': token})
+            user_mdl.write(
+                cr,
+                SUPERUSER_ID,
+                user_id,
+                {'oauth_token': token, 'oauth_id_token': id_token},
+            )
             res['login'] = user.get('login', False)
         res['token'] = token
         return res
