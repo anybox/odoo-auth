@@ -1,3 +1,3 @@
 # flake8:noqa
-import controlers
-import model
+from . import controlers
+from . import model
