@@ -1,4 +1,6 @@
-uth_oauth2 module for Odoo, OAuth2 Authentication module
+##############################################################################
+#
+#    auth_oauth2 module for Odoo, OAuth2 Authentication module
 #    Copyright (C) 2014-2015 Anybox (<https://anybox.fr>)
 #
 #    This file is a part of auth_oauth2
