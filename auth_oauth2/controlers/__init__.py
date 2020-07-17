@@ -1,3 +1,3 @@
 # flake8:noqa
-import main
-import session
+from . import main
+from . import session

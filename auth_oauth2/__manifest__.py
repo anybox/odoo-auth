@@ -35,19 +35,19 @@
         'support': 'support@anybox.fr',
         'depends': ['base', 'web'],
         'external_dependencies': {
-                    'python': ['oauth2client'],
-                },
+            'python': ['oauth2client'],
+        },
         'data': [
-                    'data/res_users_view.xml',
-                    'static/src/xml/auth_oauth2.xml',
-                    'views/auth_oauth2_view.xml',
-                ],
+            'data/res_users_view.xml',
+            'static/src/xml/auth_oauth2.xml',
+            'views/auth_oauth2_view.xml',
+        ],
         'demo': [
-                    'demo/res_users.xml',
-                ],
+            'demo/res_users.xml',
+        ],
         'js': [
-                    'static/src/js/auth_oauth2.js'
-                ],
+            'static/src/js/auth_oauth2.js'
+        ],
         'css': [],
         'qweb': [],
         'installable': True,
