@@ -2,14 +2,15 @@
 import ast
 import httplib2
 import logging
-from openerp.addons.web import http
-from openerp.addons.web.controllers.main import Session as session
-from openerp.tools import config
-from openerp.osv import osv
+from odoo import http
+from odoo.http import request
+from odoo.addons.web.controllers.main import Session as session
+from odoo.tools import config
+from odoo.osv import osv
 from oauth2client.client import AccessTokenCredentials as ATC
 from socket import timeout
 
-openerpweb = http
+openerpweb = ir_http
 
 
 class Session(session):

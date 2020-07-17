@@ -2,7 +2,7 @@ import functools
 import logging
 import ast
 import urllib
-import openerp.addons.web.http as openerpweb
+import openerp.addons.web.ir_http as openerpweb
 import httplib2
 import simplejson
 import urlparse
@@ -14,15 +14,15 @@ from oauth2client import GOOGLE_AUTH_URI
 from oauth2client import GOOGLE_TOKEN_URI
 from oauth2client import GOOGLE_REVOKE_URI
 
-from openerp.addons.web.controllers.main import db_monodb, ensure_db, set_cookie_and_redirect, login_and_redirect
-from openerp.addons.auth_signup.controllers.main import AuthSignupHome as Home
-from openerp import http
-from openerp.http import request
-from openerp.modules.registry import RegistryManager
-from openerp.addons.web.controllers.main import login_and_redirect
-from openerp import SUPERUSER_ID
-from openerp.tools import config
-from openerp.tools.translate import _
+from odoo.addons.web.controllers.main import db_monodb, ensure_db, set_cookie_and_redirect, login_and_redirect
+from odoo.addons.auth_signup.controllers.main import AuthSignupHome as Home
+from odoo import http
+from odoo.http import request
+from odoo.modules.registry import RegistryManager
+from odoo.addons.web.controllers.main import login_and_redirect
+from odoo import SUPERUSER_ID
+from odoo.tools import config
+from odoo.tools.translate import _
 
 DEFAULT_CLIENT_ID = ''
 DEFAULT_CLIENT_SECRET = ''
